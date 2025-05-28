@@ -119,4 +119,4 @@ Example (Netlify):
 ## 👨‍💻 Developer
 
 Noor Hannani Syamimi binti Mohd Suffian
-📧 noorhannanisyamimi@graduate.utm.my
+noorhannanisyamimi@graduate.utm.my
