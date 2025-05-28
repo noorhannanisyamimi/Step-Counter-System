@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step Counter Dashboard</title>
+  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Step Counter Dashboard</h1>
+    <p class="author">Developed by Noor Hannani Syamimi binti Mohd Suffin | noorhannanisyamimi@gmail.com</p>
+    <p class="description">Live visualization of your step count data collected from the mobile app</p>
+
+    <div class="filter">
+      <label for="rangeSelect">Filter: </label>
+      <select id="rangeSelect">
+        <option value="all">All Time</option>
+        <option value="24h">Last 24 Hours</option>
+        <option value="7">Last 7 Entries</option>
+      </select>
+    </div>
+
+    <div class="summary" id="summary">
+      Loading...
+    </div>
+
+    <canvas id="stepChart" height="400"></canvas>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCWuDJDPGNjYMzQGffcc0SRxoSnUGQ0tH4",
+      authDomain: "step-counter-a8a32.firebaseapp.com",
+      projectId: "step-counter-a8a32",
+      storageBucket: "step-counter-a8a32.appspot.com",
+      messagingSenderId: "1081445662213",
+      appId: "1:1081445662213:web:2a0f8203a3dfa44ce0266c",
+      measurementId: "G-GKZBF49CSM"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    let allData = [];
+
+    document.getElementById('rangeSelect').addEventListener('change', () => {
+      filterAndRender();
+    });
+
+    async function fetchStepData() {
+      try {
+        const snapshot = await db.collection("stepData")
+          .orderBy("timestamp", "asc")
+          .get();
+
+        allData = snapshot.docs.map(doc => {
+          const d = doc.data();
+          return {
+            steps: d.steps,
+            timestamp: d.timestamp?.seconds ? new Date(d.timestamp.seconds * 1000) : null
+          };
+        });
+
+        filterAndRender();
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+
+    function filterAndRender() {
+      const range = document.getElementById("rangeSelect").value;
+      let filtered = [...allData];
+
+      if (range === "24h") {
+        const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        filtered = filtered.filter(entry => entry.timestamp > cutoff);
+      } else if (range === "7") {
+        filtered = filtered.slice(-7);
+      }
+
+      const labels = filtered.map(d => new Intl.DateTimeFormat("default", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      }).format(d.timestamp));
+
+      const data = filtered.map(d => d.steps);
+
+      renderChart(labels, data);
+      updateSummary(data);
+    }
+
+    let chartInstance = null;
+
+function renderChart(labels, data) {
+  const ctx = document.getElementById("stepChart").getContext("2d");
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+
+  chartInstance = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Steps",
+        data: data,
+        borderColor: "#1a73e8",
+        backgroundColor: "rgba(26, 115, 232, 0.1)",
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false, // <-- still allows flexibility
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: "Time"
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: "Step Count"
+          }
+        }
+      },
+      plugins: {
+        legend: { display: true, position: "top" },
+        tooltip: { mode: "index", intersect: false }
+      }
+    }
+  });
+}
+
+
+    function updateSummary(dataArray) {
+      const total = dataArray.reduce((acc, val) => acc + val, 0);
+      document.getElementById("summary").textContent = `Total Steps: ${total}`;
+    }
+
+    fetchStepData();
+  </script>
+</body>
+</html>
