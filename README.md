@@ -60,6 +60,12 @@ e. **Run the app:**
 
 ---
 
+## 🔗 Demo 
+
+You can also access Google Drive here to watch the demo:
+
+📂 (https://drive.google.com/drive/folders/1ToTaQexNufk7Q5kFXRWtxW97nm9bWcxB?usp=sharing)
+
 ## ☁️ 2. How to Deploy the Backend API
 
 Backend API is **not used**.
